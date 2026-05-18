@@ -13,6 +13,7 @@ from .discriminator import (
 from .text_encoder import TextEncoder
 from .reference_encoder import ReferenceEncoder
 from .vf_estimator import VFEstimator, VFEstimatorBlock, TimeEmbedding, ConditioningBlock
+from .duration_predictor import DurationPredictor, DPTextEncoder, DPReferenceEncoder
 
 __all__ = [
     'ConvNeXtBlock',
@@ -34,4 +35,7 @@ __all__ = [
     'VFEstimatorBlock',
     'TimeEmbedding',
     'ConditioningBlock',
+    'DurationPredictor',
+    'DPTextEncoder',
+    'DPReferenceEncoder',
 ]

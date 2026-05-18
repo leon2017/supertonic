@@ -15,7 +15,7 @@ use rand_distr::{Distribution, Normal};
 use regex::Regex;
 
 // Available languages for multilingual TTS
-pub const AVAILABLE_LANGS: &[&str] = &["en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"];
+pub const AVAILABLE_LANGS: &[&str] = &["en", "ko", "ja", "zh", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"];
 
 pub fn is_valid_lang(lang: &str) -> bool {
     AVAILABLE_LANGS.contains(&lang)
@@ -688,7 +688,7 @@ impl TextToSpeech {
         speed: f32,
         silence_duration: f32,
     ) -> Result<(Vec<f32>, f32)> {
-        let max_len = if lang == "ko" || lang == "ja" { 120 } else { 300 };
+        let max_len = if lang == "ko" || lang == "ja" || lang == "zh" { 120 } else { 300 };
         let chunks = chunk_text(text, Some(max_len));
         
         let mut wav_cat: Vec<f32> = Vec::new();

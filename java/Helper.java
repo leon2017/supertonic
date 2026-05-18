@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
  * Available languages for multilingual TTS
  */
 class Languages {
-    public static final List<String> AVAILABLE = Arrays.asList("en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na");
+    public static final List<String> AVAILABLE = Arrays.asList("en", "ko", "ja", "zh", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na");
     
     public static boolean isValid(String lang) {
         return AVAILABLE.contains(lang);
@@ -450,7 +450,7 @@ class TextToSpeech {
      */
     public TTSResult call(String text, String lang, Style style, int totalStep, float speed, float silenceDuration, OrtEnvironment env) 
             throws OrtException {
-        int maxLen = (lang.equals("ko") || lang.equals("ja")) ? 120 : 300;
+        int maxLen = (lang.equals("ko") || lang.equals("ja") || lang.equals("zh")) ? 120 : 300;
         List<String> chunks = Helper.chunkText(text, maxLen);
         
         List<Float> wavCat = new ArrayList<>();

@@ -12,7 +12,7 @@ final logger = Logger(
 );
 
 // Available languages for multilingual TTS
-const List<String> availableLangs = ['en', 'ko', 'ja', 'ar', 'bg', 'cs', 'da', 'de', 'el', 'es', 'et', 'fi', 'fr', 'hi', 'hr', 'hu', 'id', 'it', 'lt', 'lv', 'nl', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sv', 'tr', 'uk', 'vi', 'na'];
+const List<String> availableLangs = ['en', 'ko', 'ja', 'zh', 'ar', 'bg', 'cs', 'da', 'de', 'el', 'es', 'et', 'fi', 'fr', 'hi', 'hr', 'hu', 'id', 'it', 'lt', 'lv', 'nl', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sv', 'tr', 'uk', 'vi', 'na'];
 
 bool isValidLang(String lang) => availableLangs.contains(lang);
 
@@ -285,7 +285,7 @@ class TextToSpeech {
   Future<Map<String, dynamic>> call(
       String text, String lang, Style style, int totalStep,
       {double speed = 1.05, double silenceDuration = 0.3}) async {
-    final maxLen = (lang == 'ko' || lang == 'ja') ? 120 : 300;
+    final maxLen = (lang == 'ko' || lang == 'ja' || lang == 'zh') ? 120 : 300;
     final chunks = _chunkText(text, maxLen: maxLen);
     final langList = List.filled(chunks.length, lang);
     List<double>? wavCat;

@@ -19,7 +19,7 @@ import (
 )
 
 // Available languages for multilingual TTS
-var AvailableLangs = []string{"en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"}
+var AvailableLangs = []string{"en", "ko", "ja", "zh", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"}
 
 // Config structures
 type SpecProcessorConfig struct {
@@ -801,7 +801,7 @@ func (tts *TextToSpeech) _infer(textList []string, langList []string, style *Sty
 // Call synthesizes speech from a single text with automatic chunking
 func (tts *TextToSpeech) Call(text string, lang string, style *Style, totalStep int, speed float32, silenceDuration float32) ([]float32, float32, error) {
 	maxLen := 300
-	if lang == "ko" || lang == "ja" {
+	if lang == "ko" || lang == "ja" || lang == "zh" {
 		maxLen = 120
 	}
 	chunks := chunkText(text, maxLen)

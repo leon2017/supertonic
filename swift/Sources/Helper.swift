@@ -4,7 +4,7 @@ import OnnxRuntimeBindings
 
 // MARK: - Available Languages
 
-let AVAILABLE_LANGS = ["en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"]
+let AVAILABLE_LANGS = ["en", "ko", "ja", "zh", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"]
 
 func isValidLang(_ lang: String) -> Bool {
     return AVAILABLE_LANGS.contains(lang)
@@ -701,7 +701,7 @@ class TextToSpeech {
     }
     
     func call(_ text: String, _ lang: String, _ style: Style, _ totalStep: Int, speed: Float = 1.05, silenceDuration: Float = 0.3) throws -> (wav: [Float], duration: Float) {
-        let maxLen = (lang == "ko" || lang == "ja") ? 120 : 300
+        let maxLen = (lang == "ko" || lang == "ja" || lang == "zh") ? 120 : 300
         let chunks = chunkText(text, maxLen: maxLen)
         let langList = Array(repeating: lang, count: chunks.count)
         

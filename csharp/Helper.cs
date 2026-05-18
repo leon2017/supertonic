@@ -13,7 +13,7 @@ namespace Supertonic
     // Available languages for multilingual TTS
     public static class Languages
     {
-        public static readonly string[] Available = { "en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na" };
+        public static readonly string[] Available = { "en", "ko", "ja", "zh", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na" };
     }
 
     // ============================================================================
@@ -440,7 +440,7 @@ namespace Supertonic
                 throw new ArgumentException("Single speaker text to speech only supports single style");
             }
 
-            int maxLen = (lang == "ko" || lang == "ja") ? 120 : 300;
+            int maxLen = (lang == "ko" || lang == "ja" || lang == "zh") ? 120 : 300;
             var textList = Helper.ChunkText(text, maxLen);
             var wavCat = new List<float>();
             float durCat = 0.0f;

@@ -12,7 +12,7 @@
 using json = nlohmann::json;
 
 // Available languages for multilingual TTS
-const std::vector<std::string> AVAILABLE_LANGS = {"en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"};
+const std::vector<std::string> AVAILABLE_LANGS = {"en", "ko", "ja", "zh", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "na"};
 
 // Global tensor buffers for memory management
 static std::vector<std::vector<float>> g_tensor_buffers_float;
@@ -695,7 +695,7 @@ TextToSpeech::SynthesisResult TextToSpeech::call(
         throw std::runtime_error("Single speaker text to speech only supports single style");
     }
     
-    int max_len = (lang == "ko" || lang == "ja") ? 120 : 300;
+    int max_len = (lang == "ko" || lang == "ja" || lang == "zh") ? 120 : 300;
     auto text_list = chunkText(text, max_len);
     std::vector<float> wav_cat;
     float dur_cat = 0.0f;

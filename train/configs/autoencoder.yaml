@@ -1,0 +1,41 @@
+data:
+  train_dir: ./data/zh/train
+  val_dir: ./data/zh/val
+  segment_length: 44100
+  sample_rate: 44100
+  n_mels: 228
+  hop_length: 512
+
+model:
+  mel_channels: 228
+  latent_dim: 24
+  channels: 512
+  intermediate: 2048
+  num_layers: 10
+  kernel_size: 7
+  hop_length: 512
+  use_checkpoint: true
+
+training:
+  iterations: 500000
+  batch_size: 4
+  gradient_accumulation: 16
+  learning_rate: 0.0002
+  disc_learning_rate: 0.0002
+  weight_decay: 0.01
+  fp16: true
+
+loss_weights:
+  reconstruction: 45.0
+  adversarial: 1.0
+  feature_matching: 0.1
+
+checkpoint:
+  save_dir: ./checkpoints/autoencoder
+  save_interval: 10000
+  latest_interval: 1000
+  keep_last_n: 5
+
+logging:
+  log_interval: 100
+  val_interval: 5000

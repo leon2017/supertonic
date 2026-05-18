@@ -1,0 +1,68 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ruff check *)",
+      "Bash(ruff format *)",
+      "Bash(mypy *)",
+      "Bash(pytest *)",
+      "Bash(python -m pytest *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(conda *)",
+      "Bash(pip install*)",
+      "Bash(pip list*)",
+      "Bash(nvidia-smi*)",
+      "Bash(python -c *)",
+      "Bash(find . *)",
+      "Bash(ls *)",
+      "Bash(cat requirements*)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(python train.py*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(torchrun*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const d=require('fs').readFileSync(0,'utf8');const j=JSON.parse(d);const p=j.tool_input?.file_path||'';if(/\\.(pth|pt|onnx|tflite|mlmodel|npy|npz)$/.test(p)){console.error('BLOCKED: binary/model file');process.exit(2)}process.stdout.write(d)\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const d=require('fs').readFileSync(0,'utf8');const j=JSON.parse(d);const p=j.tool_input?.file_path||'';if(/\\.py$/.test(p)){const{execSync}=require('child_process');try{const r=execSync('ruff check '+p+' 2>&1').toString();if(r.trim())console.error(r.slice(0,500))}catch(e){console.error(e.stdout?.toString().slice(0,500)||'ruff error')}}process.stdout.write(d)\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd C:/workspace/videostab_llm_nndvs && ruff check . --select E,F --quiet 2>&1 | tail -5"
+          }
+        ]
+      }
+    ]
+  }
+}

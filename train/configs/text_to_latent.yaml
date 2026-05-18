@@ -1,0 +1,42 @@
+data:
+  train_dir: ./data/zh/train
+  val_dir: ./data/zh/val
+  unicode_indexer: ./assets/onnx/unicode_indexer_zh.json
+  sample_rate: 44100
+  n_mels: 228
+  hop_length: 512
+
+model:
+  vocab_size: 10000
+  char_embedding_dim: 128
+  text_channels: 512
+  text_num_heads: 4
+  latent_dim: 24
+  temporal_compression: 6
+  vf_channels: 256
+  vf_intermediate: 1024
+  vf_num_blocks: 4
+  use_checkpoint: true
+
+training:
+  iterations: 300000
+  batch_size: 4
+  gradient_accumulation: 16
+  learning_rate: 0.0005
+  weight_decay: 0.01
+  fp16: true
+  cfg_dropout: 0.05
+
+inference:
+  cfg_scale: 3.0
+  euler_steps: 32
+
+checkpoint:
+  save_dir: ./checkpoints/text_to_latent
+  save_interval: 10000
+  latest_interval: 1000
+  keep_last_n: 5
+
+logging:
+  log_interval: 100
+  val_interval: 5000

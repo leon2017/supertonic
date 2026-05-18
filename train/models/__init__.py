@@ -10,6 +10,9 @@ from .discriminator import (
     ResolutionDiscriminator,
     MultiResolutionDiscriminator,
 )
+from .text_encoder import TextEncoder
+from .reference_encoder import ReferenceEncoder
+from .vf_estimator import VFEstimator, VFEstimatorBlock, TimeEmbedding, ConditioningBlock
 
 __all__ = [
     'ConvNeXtBlock',
@@ -25,4 +28,10 @@ __all__ = [
     'MultiPeriodDiscriminator',
     'ResolutionDiscriminator',
     'MultiResolutionDiscriminator',
+    'TextEncoder',
+    'ReferenceEncoder',
+    'VFEstimator',
+    'VFEstimatorBlock',
+    'TimeEmbedding',
+    'ConditioningBlock',
 ]

@@ -1,13 +1,54 @@
 import argparse
-import json
+import librosa
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
-from datasets import load_from_disk
 import numpy as np
+import random
+import sys
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
 
 from text_cleaner import clean_chinese_text
 from audio_processor import resample_audio, extract_mel_spectrogram
+
+
+def parse_content_txt(content_path: Path) -> dict[str, str]:
+    """解析 content.txt，提取文件名到中文文本的映射。"""
+    mapping = {}
+    with open(content_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("\t")
+            if len(parts) != 2:
+                continue
+            filename = parts[0]
+            tokens = parts[1].split()
+            chars = [t for i, t in enumerate(tokens) if i % 2 == 0]
+            text = "".join(chars)
+            mapping[filename] = text
+    return mapping
+
+
+def find_wav_files(wav_dir: Path, text_mapping: dict[str, str]) -> list[dict]:
+    """查找所有有对应文本的 WAV 文件。"""
+    samples = []
+    for speaker_dir in sorted(wav_dir.iterdir()):
+        if not speaker_dir.is_dir():
+            continue
+        speaker_id = speaker_dir.name
+        for wav_file in sorted(speaker_dir.glob("*.wav")):
+            if wav_file.name in text_mapping:
+                samples.append({
+                    "wav_path": wav_file,
+                    "filename": wav_file.name,
+                    "speaker_id": speaker_id,
+                    "text": text_mapping[wav_file.name],
+                })
+    return samples
 
 
 def preprocess_aishell3(
@@ -15,120 +56,89 @@ def preprocess_aishell3(
     output_dir: str,
     target_sr: int = 44100,
     n_mels: int = 228,
-    hop_length: int = 512
+    hop_length: int = 512,
+    seed: int = 42,
 ) -> None:
-    """预处理 AISHELL-3 数据集。
-
-    Args:
-        aishell3_dir: AISHELL-3 数据目录
-        output_dir: 输出目录
-        target_sr: 目标采样率
-        n_mels: Mel 频带数
-        hop_length: 帧移
-    """
+    aishell3_path = Path(aishell3_dir)
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # 创建子目录
-    for split in ['train', 'val', 'test']:
-        (output_path / split / 'audio').mkdir(parents=True, exist_ok=True)
-        (output_path / split / 'text').mkdir(parents=True, exist_ok=True)
-        (output_path / split / 'mel').mkdir(parents=True, exist_ok=True)
+    for split in ["train", "val"]:
+        (output_path / split / "audio").mkdir(parents=True, exist_ok=True)
+        (output_path / split / "mel").mkdir(parents=True, exist_ok=True)
 
-    # 加载数据集
-    print("加载 AISHELL-3 数据集...")
-    dataset = load_from_disk(aishell3_dir)
-    train_data = dataset['train']
+    content_path = aishell3_path / "train" / "content.txt"
+    wav_dir = aishell3_path / "train" / "wav"
 
-    # 数据集划分：90% train, 5% val, 5% test
-    total_samples = len(train_data)
-    train_size = int(total_samples * 0.9)
-    val_size = int(total_samples * 0.05)
+    print("解析 content.txt...")
+    text_mapping = parse_content_txt(content_path)
+    print(f"  转录条目: {len(text_mapping)}")
 
+    print("查找 WAV 文件...")
+    samples = find_wav_files(wav_dir, text_mapping)
+    print(f"  匹配样本: {len(samples)}")
+    print(f"  说话人数: {len(set(s['speaker_id'] for s in samples))}")
+
+    random.seed(seed)
+    random.shuffle(samples)
+
+    val_size = int(len(samples) * 0.05)
     splits = {
-        'train': range(0, train_size),
-        'val': range(train_size, train_size + val_size),
-        'test': range(train_size + val_size, total_samples)
+        "val": samples[:val_size],
+        "train": samples[val_size:],
     }
 
-    # 处理每个 split
-    for split_name, indices in splits.items():
-        print(f"\n处理 {split_name} split...")
+    for split_name, split_samples in splits.items():
+        print(f"\n处理 {split_name} split ({len(split_samples)} 样本)...")
         metadata = []
 
-        for idx in tqdm(indices):
-            sample = train_data[int(idx)]
-            audio_id = f"{split_name}_{idx:06d}"
+        for sample in tqdm(split_samples):
+            audio_id = sample["filename"].replace(".wav", "")
+            cleaned_text = clean_chinese_text(sample["text"])
 
-            # 提取数据
-            audio_array = np.array(sample['audio']['array'])
-            sr = sample['audio']['sampling_rate']
-            text = sample['text']
-            speaker_id = sample.get('speaker_id', 'unknown')
+            audio_out = output_path / split_name / "audio" / f"{audio_id}.wav"
+            resample_audio(str(sample["wav_path"]), str(audio_out), target_sr)
 
-            # 清洗文本
-            cleaned_text = clean_chinese_text(text)
-
-            # 保存文本
-            text_path = output_path / split_name / 'text' / f"{audio_id}.txt"
-            with open(text_path, 'w', encoding='utf-8') as f:
-                f.write(cleaned_text)
-
-            # 保存音频（临时）
-            temp_audio_path = output_path / split_name / 'audio' / f"{audio_id}_temp.wav"
-            import soundfile as sf
-            sf.write(temp_audio_path, audio_array, sr)
-
-            # 重采样音频
-            audio_path = output_path / split_name / 'audio' / f"{audio_id}.wav"
-            resample_audio(str(temp_audio_path), str(audio_path), target_sr)
-            temp_audio_path.unlink()  # 删除临时文件
-
-            # 提取 Mel 频谱
             mel = extract_mel_spectrogram(
-                str(audio_path),
+                str(audio_out),
                 n_mels=n_mels,
                 hop_length=hop_length,
-                target_sr=target_sr
+                target_sr=target_sr,
             )
-
-            # 保存 Mel 频谱
-            mel_path = output_path / split_name / 'mel' / f"{audio_id}.npy"
+            mel_path = output_path / split_name / "mel" / f"{audio_id}.npy"
             np.save(mel_path, mel)
 
-            # 计算时长
-            duration = len(audio_array) / sr
+            duration = librosa.get_duration(path=str(audio_out))
 
-            # 添加到 metadata
             metadata.append({
-                'audio_id': audio_id,
-                'audio_path': str(audio_path.relative_to(output_path)),
-                'text_path': str(text_path.relative_to(output_path)),
-                'mel_path': str(mel_path.relative_to(output_path)),
-                'text': cleaned_text,
-                'speaker_id': speaker_id,
-                'duration': duration,
-                'mel_frames': mel.shape[1]
+                "audio_id": audio_id,
+                "audio_path": f"{split_name}/audio/{audio_id}.wav",
+                "mel_path": f"{split_name}/mel/{audio_id}.npy",
+                "text": cleaned_text,
+                "speaker_id": sample["speaker_id"],
+                "duration": duration,
+                "mel_frames": mel.shape[1],
             })
 
-        # 保存 metadata
         df = pd.DataFrame(metadata)
-        metadata_path = output_path / split_name / 'metadata.csv'
+        metadata_path = output_path / split_name / "metadata.csv"
         df.to_csv(metadata_path, index=False)
-        print(f"{split_name} metadata 已保存到 {metadata_path}")
-        print(f"  样本数: {len(df)}")
-        print(f"  总时长: {df['duration'].sum() / 3600:.2f} 小时")
+        print(f"  {split_name}: {len(df)} 样本, {df['duration'].sum()/3600:.2f} 小时")
 
     print("\n预处理完成！")
 
 
 def main():
-    parser = argparse.ArgumentParser(description='预处理 AISHELL-3 数据集')
-    parser.add_argument('--aishell3_dir', type=str, required=True, help='AISHELL-3 数据目录')
-    parser.add_argument('--output_dir', type=str, required=True, help='输出目录')
-    parser.add_argument('--target_sr', type=int, default=44100, help='目标采样率')
-    parser.add_argument('--n_mels', type=int, default=228, help='Mel 频带数')
-    parser.add_argument('--hop_length', type=int, default=512, help='帧移')
+    parser = argparse.ArgumentParser(description="预处理 AISHELL-3 数据集")
+    parser.add_argument(
+        "--aishell3_dir", type=str, required=True,
+        help="AISHELL-3 数据目录（包含 train/wav 和 train/content.txt）",
+    )
+    parser.add_argument("--output_dir", type=str, required=True, help="输出目录")
+    parser.add_argument("--target_sr", type=int, default=44100, help="目标采样率")
+    parser.add_argument("--n_mels", type=int, default=228, help="Mel 频带数")
+    parser.add_argument("--hop_length", type=int, default=512, help="帧移")
+    parser.add_argument("--seed", type=int, default=42, help="随机种子")
     args = parser.parse_args()
 
     preprocess_aishell3(
@@ -136,7 +146,8 @@ def main():
         args.output_dir,
         args.target_sr,
         args.n_mels,
-        args.hop_length
+        args.hop_length,
+        args.seed,
     )
 
 

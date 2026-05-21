@@ -1,6 +1,6 @@
 data:
-  train_dir: ./data/zh/train
-  val_dir: ./data/zh/val
+  train_dir: ./processed_data/train
+  val_dir: ./processed_data/val
   segment_length: 44100
   sample_rate: 44100
   n_mels: 228
@@ -24,6 +24,7 @@ training:
   disc_learning_rate: 0.0002
   weight_decay: 0.01
   fp16: true
+  num_workers: 0
 
 loss_weights:
   reconstruction: 45.0
@@ -33,7 +34,7 @@ loss_weights:
 checkpoint:
   save_dir: ./checkpoints/autoencoder
   save_interval: 10000
-  latest_interval: 1000
+  latest_interval: 500
   keep_last_n: 5
 
 logging:

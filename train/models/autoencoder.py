@@ -60,10 +60,15 @@ class LatentDecoder(nn.Module):
 
         self.input_proj = nn.Conv1d(latent_dim, channels, 1)
 
-        self.upsample = nn.ConvTranspose1d(
-            channels, channels, kernel_size=hop_length * 2,
-            stride=hop_length, padding=hop_length // 2
-        )
+        # Progressive upsampling: 512 = 8 × 8 × 8
+        upsample_rates = [8, 8, 8]
+        self.upsamples = nn.ModuleList()
+        for rate in upsample_rates:
+            self.upsamples.append(nn.ConvTranspose1d(
+                channels, channels,
+                kernel_size=rate * 2, stride=rate, padding=rate // 2
+            ))
+        self.upsample_act = nn.GELU()
 
         self.blocks = nn.ModuleList([
             ConvNeXtBlock(channels, intermediate, kernel_size, dilation=dilations[i])
@@ -75,7 +80,8 @@ class LatentDecoder(nn.Module):
     def forward(self, latent: torch.Tensor) -> torch.Tensor:
         x = self.input_proj(latent)
 
-        x = self.upsample(x)
+        for upsample in self.upsamples:
+            x = self.upsample_act(upsample(x))
 
         for block in self.blocks:
             if self.use_checkpoint and self.training:
